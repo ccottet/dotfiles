@@ -1,0 +1,315 @@
+set showcmd " Show (partial) command in status line.
+set showmatch " Show matching brackets.
+set ignorecase " Do case insensitive matching
+set smartcase " Do smart case matching
+set incsearch " Incremental search
+set autowrite " Automatically save before commands like :next and :make
+set hidden " Hide buffers when they are abandoned
+set mouse=a " Enable mouse usage (all modes)
+
+" Set compatibility to Vim only.
+set nocompatible
+
+" Helps force plug-ins to load correctly when it is turned back on below.
+filetype off
+
+" Turn on syntax highlighting.
+syntax on
+
+" For plug-ins to load correctly.
+filetype plugin indent on
+
+set noerrorbells
+set noswapfile
+set nobackup
+set nowritebackup
+set splitright
+set splitbelow
+set laststatus=2
+
+set ruler
+set fileformats=unix,dos,mac
+set lazyredraw
+set nocursorcolumn
+set nocursorline
+
+syntax sync minlines=256
+set synmaxcol=300
+set re=1
+
+set conceallevel=0
+
+command! -nargs=* -complete=help Help vertical belowright help <args>
+autocmd FileType help wincmd L
+
+set norelativenumber
+
+" Turn off modelines
+set modelines=0
+
+" Automatically wrap text that extends beyond the screen length.
+set wrap
+" Vim's auto indentation feature does not work properly with text copied from outside of Vim. Press the <F2> key to toggle paste mode on/off.
+nnoremap <F2> :set invpaste paste?<CR>
+imap <F2> <C-O>:set invpaste paste?<CR>
+set pastetoggle=<F2>
+
+" Uncomment below to set the max textwidth. Use a value corresponding to the width of your screen.
+set textwidth=120
+set formatoptions=tcqrn1
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+set expandtab
+set noshiftround
+
+" Display 5 lines above/below the cursor when scrolling with a mouse.
+set scrolloff=5
+" Fixes common backspace problems
+set backspace=indent,eol,start
+
+" Speed up scrolling in Vim
+set ttyfast
+
+" Status bar
+set laststatus=2
+
+" Display options
+set noshowmode
+
+set autoindent
+set smartindent
+set complete-=i
+set showmatch
+set smarttab
+
+" Highlight matching pairs of brackets. Use the '%' character to jump between them.
+set matchpairs+=<:>
+
+" Display different types of white spaces.
+set list
+set listchars=tab:›\ ,trail:•,extends:#,nbsp:.
+
+" Show line numbers
+set number
+
+set notimeout
+set ttimeout
+set ttimeoutlen=10
+
+set complete=.,w,b,u,t
+set completeopt=longest,menuone
+
+" Set status line display
+set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ [BUFFER=%n]\ %{strftime('%c')}
+
+" Encoding
+set encoding=utf-8
+
+" Highlight matching search patterns
+set hlsearch
+" Enable incremental search
+set incsearch
+" Include matching uppercase words with lowercase search term
+set ignorecase
+" Include only uppercase words with uppercase search term
+set smartcase
+
+" Store info from no more than 100 files at a time, 9999 lines of text, 100kb of data. Useful for copying large amounts of data between files.
+set viminfo='100,<9999,s100
+
+if &history < 1000
+    set history=50
+endif
+
+if &tabpagemax < 50
+  set tabpagemax=50
+endif
+
+if !empty(&viminfo)
+  set viminfo^=!
+endif
+
+if !&scrolloff
+  set scrolloff=1
+endif
+
+if !&sidescrolloff
+  set sidescrolloff=5
+endif
+
+set display+=lastline
+
+" Map the <Space> key to toggle a selected fold opened/closed.
+nnoremap <silent> <Space> @=(foldlevel('.')?'za':"\<Space>")<CR>
+vnoremap <Space> zf
+
+" Automatically save and load folds
+autocmd BufWinLeave *.* mkview
+autocmd BufWinEnter *.* silent loadview"
+autocmd BufReadPost *
+      \ if line("'\"") > 1 && line("'\"") <= line("$") |
+      \	exe "normal! g`\"" |
+      \ endif
+
+set background=dark
+let g:solarized_termcolors=256
+let g:solarized_termtrans=1
+" let g:hybrid_use_Xresources = 1
+" let g:rehash256 = 1
+colorscheme solarized
+set guifont=Inconsolata:h15
+set guioptions-=L
+
+let mapleader = ","
+let g:mapleader = ","
+
+autocmd FileType qf wincmd J
+
+nnoremap <leader><space> :nohlsearch<CR>
+
+function! InsertDate()
+  " Get the position of the cursor, if it is the start of the file we want
+  " a different behavior than if it is elsewhere.
+  let cursor_pos = getpos(".")
+  let now = trim(system('date'))
+  if cursor_pos[1] == "1"
+    if cursor_pos[2] == "1"
+      call append(0, [now, "", "- "])
+      call cursor(cursor_pos[1]+2, 2)
+    endif
+  else
+    call append(cursor_pos[1], ["", now, "", "- "])
+    call cursor(cursor_pos[1]+4, 2)
+  endif
+endfunction
+
+" Add a date timestamp between two new lines.
+nnoremap <leader>d :call InsertDate()<CR>
+
+map <C-j> <C-W>j
+map <C-k> <C-W>k
+map <C-h> <C-W>h
+map <C-l> <C-W>l
+
+nmap <leader>w :w!<cr>
+
+nnoremap <space> zz
+
+" Move up and down on splitted lines (on small width screens)
+map <Up> gk
+map <Down> gj
+map k gk
+map j gj
+
+" Just go out in insert mode
+imap jk <ESC>l
+
+" Search mappings: These will make it so that going to the next one in a
+" search will center on the line it's found in.
+nnoremap n nzzzv
+nnoremap N Nzzzv
+
+nnoremap <leader>W :%s/\s\+$//<cr>:let @/=''<CR>
+
+nnoremap Y y$
+map q: :q
+map :Vs :vs
+map :Sp :sp
+
+" Allow saving of files as sudo when I forgot to start vim using sudo.
+cmap w!! w !sudo tee > /dev/null %
+
+"------------------------------------
+" load other modules
+"------------------------------------
+" get the current folder
+let s:home = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+" define a command to load scripts
+command! -nargs=1 LoadScript exec 'so '.s:home.'/'.'<args>'
+"exec 'set rtp+='.s:home
+"set rtp+=~/.vim
+LoadScript ../vim/init-plugins.vim
+
+"==================== NerdTree ====================
+" For toggling
+nmap <C-n> :NERDTreeToggle<CR>
+noremap <Leader>n :NERDTreeToggle<cr>
+noremap <Leader>f :NERDTreeFind<cr>
+
+let NERDTreeShowHidden=1
+
+let NERDTreeIgnore=['\.vim$', '\~$', '\.git$', '.DS_Store']
+
+" Close nerdtree and vim on close file
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
+
+" ==================== vim-json ====================
+
+let g:vim_json_syntax_conceal = 0
+
+" ==================== vim-multiple-cursors ====================
+let g:multi_cursor_use_default_mapping=0
+let g:multi_cursor_next_key='<C-i>'
+let g:multi_cursor_prev_key='<C-y>'
+let g:multi_cursor_skip_key='<C-b>'
+let g:multi_cursor_quit_key='<Esc>'
+
+" Called once right before you start selecting multiple cursors
+function! Multiple_cursors_before()
+  if exists(':NeoCompleteLock')==2
+    exe 'NeoCompleteLock'
+  endif
+endfunction
+
+" Called once only when the multiple selection is canceled (default <Esc>)
+function! Multiple_cursors_after()
+  if exists(':NeoCompleteUnlock')==2
+    exe 'NeoCompleteUnlock'
+  endif
+endfunction
+
+" ========= vim-better-whitespace ==================
+
+" auto strip whitespace except for file with extention blacklisted
+let blacklist = ['diff', 'gitcommit', 'unite', 'qf', 'help', 'markdown']
+autocmd BufWritePre * if index(blacklist, &ft) < 0 | StripWhitespace
+
+" ========= vim-markdown ==================
+
+" disable folding
+let g:vim_markdown_folding_disabled = 1
+
+" Allow for the TOC window to auto-fit when it's possible for it to shrink.
+" It never increases its default size (half screen), it only shrinks.
+let g:vim_markdown_toc_autofit = 1
+
+" Disable conceal
+let g:vim_markdown_conceal = 0
+let g:vim_markdown_conceal_code_blocks = 0
+
+" Allow the ge command to follow named anchors in links of the form
+" file#anchor or just #anchor, where file may omit the .md extension as usual
+let g:vim_markdown_follow_anchor = 1
+
+" highlight frontmatter
+let g:vim_markdown_frontmatter = 1
+let g:vim_markdown_toml_frontmatter = 1
+let g:vim_markdown_json_frontmatter = 1
+
+" =================== vim-airline ========================
+
+let g:airline_theme='solarized'
+
+" set to use powerline fonts when not in a ssh session
+let g:remoteSession = ($STY == "")
+if !g:remoteSession
+  let g:airline_powerline_fonts=1
+endif
+
+" ==================== Fugitive ====================
+nnoremap <leader>ga :Git add %:p<CR><CR>
+nnoremap <leader>gs :Gstatus<CR>
+nnoremap <leader>gp :Gpush<CR>
+vnoremap <leader>gb :Gblame<CR>
+
