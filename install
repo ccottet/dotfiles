@@ -1,0 +1,291 @@
+#!/usr/bin/env bash
+#
+# bootstrap installs things.
+
+cd "$(dirname "$0")"
+DOTFILES_ROOT=$(pwd -P)
+
+set -e
+
+echo ''
+
+info () {
+  printf "\r  [ \033[00;34m..\033[0m ] $1\n"
+}
+
+user () {
+  printf "\r  [ \033[0;33m??\033[0m ] $1\n"
+}
+
+success () {
+  printf "\r\033[2K  [ \033[00;32mOK\033[0m ] $1\n"
+}
+
+fail () {
+  printf "\r\033[2K  [\033[0;31mFAIL\033[0m] $1\n"
+  echo ''
+  exit
+}
+
+setup_gitconfig () {
+  if ! [ -f data/gitconfig.local ]
+  then
+    info 'Setup gitconfig'
+
+    git_credential='cache'
+
+    user ' - What is your github author name?'
+    read -e git_authorname
+    user ' - What is your github author email?'
+    read -e git_authoremail
+
+    sed -e "s/AUTHORNAME/$git_authorname/g" -e "s/AUTHOREMAIL/$git_authoremail/g" -e "s/GIT_CREDENTIAL_HELPER/$git_credential/g" $DOTFILES_ROOT/home/gitconfig.local.example > $DOTFILES_ROOT/data/gitconfig.local
+
+    success 'gitconfig'
+  fi
+}
+
+link_file () {
+  local src=$1 dst=$2
+
+  local overwrite= backup= skip=
+  local action=
+
+  if [ -f "$dst" -o -d "$dst" -o -L "$dst" ]
+  then
+
+    if [ "$overwrite_all" == "false" ] && [ "$backup_all" == "false" ] && [ "$skip_all" == "false" ]
+    then
+
+      local currentSrc="$(readlink $dst)"
+
+      if [ "$currentSrc" == "$src" ]
+      then
+
+        skip=true;
+
+      else
+
+        user "File already exists: $dst ($(basename "$src")), what do you want to do?\n\
+        [s]kip, [S]kip all, [o]verwrite, [O]verwrite all, [b]ackup, [B]ackup all?"
+        read -n 1 action
+
+        case "$action" in
+          o )
+            overwrite=true;;
+          O )
+            overwrite_all=true;;
+          b )
+            backup=true;;
+          B )
+            backup_all=true;;
+          s )
+            skip=true;;
+          S )
+            skip_all=true;;
+          * )
+            ;;
+        esac
+
+      fi
+
+    fi
+
+    overwrite=${overwrite:-$overwrite_all}
+    backup=${backup:-$backup_all}
+    skip=${skip:-$skip_all}
+
+    if [ "$overwrite" == "true" ]
+    then
+      rm -rf "$dst"
+      success "removed $dst"
+    fi
+
+    if [ "$backup" == "true" ]
+    then
+      mv "$dst" "${dst}.backup"
+      success "moved $dst to ${dst}.backup"
+    fi
+
+    if [ "$skip" == "true" ]
+    then
+      success "skipped $src"
+    fi
+  fi
+
+  if [ "$skip" != "true" ]  # "false" or empty
+  then
+    ln -s "$1" "$2"
+    success "linked $1 to $2"
+  fi
+}
+
+centos_deps () {
+  info 'installing CentOS dependencies'
+
+  info '>> installing rpm packages with dnf ...'
+  sudo dnf update
+  sudo dnf install zsh tmux curl vim neofetch cargo
+
+  info '>> building & installing vivid ...'
+  cargo install vivid
+
+  info '>>>> configuring vivid ...'
+  git clone git@github.com:sharkdp/vivid.git /tmp/vivid
+  mkdir -p $HOME/.config/vivid
+
+  if [ -f "$HOME/.config/vivid/filetypes.yml" ]
+  then
+    info '>>>> found filetypes.yml, skipping configuration of filetypes'
+  else
+    cp /tmp/vivid/config/filetypes.yml $HOME/.config/vivid
+  fi
+
+  if [ -d "$HOME/.config/vivid/themes" ]
+  then
+    info '>>>> found themes folder, skipping vivid themes installation'
+  else
+    cp -R /tmp/vivid/themes $HOME/.config/vivid/
+  fi
+  info '>>>> vivid configuration complete !'
+
+  info '>> building & installing lsd ...'
+  cargo install lsd
+
+  info 'dependencies installation complete !'
+}
+
+debian_deps () {
+  info 'installing Ubuntu/Debian dependencies'
+
+  info '>> installing deb packages with apt ...'
+  sudo apt update
+  sudo apt install zsh tmux curl vim neofetch -y
+
+  info '>> downloading & installing vivid ...'
+  curl -fLo /tmp/vivid.deb https://github.com/sharkdp/vivid/releases/download/v0.5.0/vivid_0.5.0_amd64.deb
+  sudo dpkg -i /tmp/vivid.deb
+
+  info '>> downloading & installing lsd ...'
+  curl -fLo /tmp/lsd.deb https://github.com/Peltoche/lsd/releases/download/0.17.0/lsd_0.17.0_amd64.deb
+  sudo dpkg -i /tmp/lsd.deb
+
+  info 'dependencies installation complete !'
+}
+
+install_deps () {
+  info 'analyzes system to determine depedencies to be installed'
+  if [ -f /etc/os-release ]
+  then
+    . /etc/os-release
+    osid=$ID
+    if [ "$osid" == "centos" ]
+    then
+      info 'CentOS detected -> launching corresponding installation sequence'
+      centos_deps
+    elif [ "$osid" == "debian" -o "$osid" == "ubuntu" ]
+    then
+      info 'Debian/Ubuntu detected -> launching corresponding installation sequence'
+      debian_deps
+    else
+      fail "${osid} is not a supported system"
+      exit 64
+    fi
+  else
+    fail 'cannot determine linux distribution for dependencies installation'
+    exit 128
+  fi
+}
+
+install_dotfiles () {
+  info 'installing dotfiles'
+
+  local overwrite_all=false backup_all=false skip_all=false
+
+  link_file "$DOTFILES_ROOT/home/aliases" "$HOME/.aliases"
+  link_file "$DOTFILES_ROOT/home/gitconfig" "$HOME/.gitconfig"
+  link_file "$DOTFILES_ROOT/data/gitconfig.local" "$HOME/.gitconfig.local"
+  link_file "$DOTFILES_ROOT/home/p10k.zsh" "$HOME/.p10k.zsh"
+  link_file "$DOTFILES_ROOT/home/tmux.conf" "$HOME/.tmux.conf"
+  link_file "$DOTFILES_ROOT/home/vimrc" "$HOME/.vimrc"
+  link_file "$DOTFILES_ROOT/home/zshrc" "$HOME/.zshrc"
+}
+
+install_go () {
+  if [ -d /usr/local/go/ ]
+  then
+    info 'go is already installed'
+  else
+    info 'go is not found, now install it...'
+    curl -fLo /tmp/go.tgz https://golang.org/dl/go1.15.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf /tmp/go.tgz
+  fi
+}
+
+configure_vim () {
+  info 'Configure vim...'
+  info '>> install plugins manager'
+  curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  info '>> install color schemes'
+  mkdir -p ~/.vim/colors
+  cp -f ~/.dotfiles/vim/colors/*.vim ~/.vim/colors/
+}
+
+configure_zsh () {
+  info 'Configure zsh...'
+  if [ -d ~/.oh-my-zsh/ ]
+  then
+    info '>> oh-my-zsh is already installed'
+  else
+    info '>> oh-my-zsh not found, install it ...'
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"  "" --unattended
+  fi
+
+  info '>> loading oh-my-zsh plugins'
+  local plgpath=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}
+
+  if [ -d $plgpath/plugins/zsh-autosuggestions ]
+  then
+    info '>> zsh-autosuggestions is already installed'
+  else
+    info '>> zsh-autosuggestions not found, install it ...'
+    git clone https://github.com/zsh-users/zsh-autosuggestions $plgpath/plugins/zsh-autosuggestions
+  fi
+
+  if [ -d $plgpath/plugins/zsh-syntax-highlighting ]
+  then
+    info '>> zsh-syntax-highlighting is already installed'
+  else
+    info '>> zsh-syntax-highlighting not found, install it ...'
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $plgpath/plugins/zsh-syntax-highlighting
+  fi
+
+  if [ -d $plgpath/plugins/zsh-completions ]
+  then
+    info '>> zsh-completions is already installed'
+  else
+    info '>> zsh-completions not found, install it ...'
+    git clone https://github.com/zsh-users/zsh-completions $plgpath/plugins/zsh-completions
+  fi
+
+  if [ -d $plgpath/themes/powerlevel10k ]
+  then
+    info '>> powerlevel10k is already installed'
+  else
+    info '>> powerlevel10k not found, install it ...'
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $plgpath/themes/powerlevel10k
+  fi
+
+  info '>> changing default shell to zsh'
+  sudo usermod -s $(which zsh) $USER
+}
+
+install_deps
+setup_gitconfig
+install_dotfiles
+install_go
+configure_vim
+configure_zsh
+
+echo ''
+info '  All installed!'
