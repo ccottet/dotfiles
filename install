@@ -131,6 +131,10 @@ centos_deps () {
   cargo install vivid
 
   info '>>>> configuring vivid ...'
+  if [ -d "/tmp/vivid" ]
+  then
+    rm -rf /tmp/vivid
+  fi
   git clone git@github.com:sharkdp/vivid.git /tmp/vivid
   mkdir -p $HOME/.config/vivid
 
