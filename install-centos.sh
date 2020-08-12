@@ -6,7 +6,7 @@ NC='\e[0m'
 # Update the package list and install zsh, tmux and vim
 echo "${GREEN}Install necessary packages...${NC}"
 sudo dnf update
-sudo dnf install zsh tmux curl vim neofetch cargo lsd
+sudo dnf install zsh tmux curl vim neofetch cargo
 
 echo "${GREEN}Prepare backup folder...${NC}"
 if [ -d ~/.dotfiles-backup ] ; then
@@ -57,11 +57,24 @@ else
 	sudo tar -C /usr/local -xzf /tmp/go.tgz
 fi
 
-# Install and configure lsd
+# Install and configure vivid
 echo "${GREEN}Install vivid...${NC}"
 echo ""
 cargo install vivid
 
+echo "${GREEN}Retrieve and install vivid configuration...${NC}"
+echo ""
+git clone git@github.com:sharkdp/vivid.git /tmp/vivid
+mkdir -p $HOME/.config/vivid
+cp /tmp/vivid/config/filetypes.yml $HOME/.config/vivid
+cp -R /tmp/vivid/themes $HOME/.config/vivid/
+
+# Install and configure lsd
+echo "${GREEN}Install lsd...${NC}"
+echo ""
+cargo install lsd
+
+#
 # Configure vim
 echo "${GREEN}Configure vim...${NC}"
 echo ""
@@ -99,7 +112,7 @@ ln -s ~/.dotfiles/home/zshrc ~/.zshrc
 # Change the shell to zsh
 echo "${GREEN}Change shell to zsh...${NC}"
 echo ""
-sudo chsh $USER -s $(which zsh)
+sudo usermod -s $(which zsh) $USER
 
 echo "${GREEN}All configurations are done!!! Good to go.${NC}"
 echo "${GREEN}Logout and login again to see the difference.${NC}"
