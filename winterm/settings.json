@@ -54,6 +54,10 @@
       "command": "find",
       "keys": "ctrl+shift+f"
     },
+    {"command": "unbound", "keys": "alt+down"},
+    {"command": "unbound", "keys": "alt+up"},
+    {"command": "unbound", "keys": "alt+left"},
+    {"command": "unbound", "keys": "alt+right"},
     {
       "command": {
         "action": "splitPane",
