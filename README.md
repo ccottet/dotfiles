@@ -4,12 +4,11 @@ Ma config pour me sentir au chaud à la maison !
 
 ### INSTALLATION
 
-Install with the following commands (replacing <distrib> with the relevant
-linux distribution (ubuntu or centos).
+Install with the following commands at your own risk.
 
 ```zsh
 $ git clone git@github.com:ccottet/dotfiles.git ~/.dotfiles
-$ ~/.dotfiles/install-<distrib>.sh
+$ ~/.dotfiles/install
 ```
 Once basic installation has proceeded, login & logout to load the environment.
 Finally, trigger installation of plugins in vim by opening it and typing the
