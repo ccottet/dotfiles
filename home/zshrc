@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -110,6 +112,12 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=8"
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# Make Python use UTF-8 encoding for output to stdin/stdout/stderr.
+
+export PYTHONIOENCODING="UTF-8"
 
 source $HOME/.aliases
 
