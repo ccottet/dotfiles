@@ -2,6 +2,7 @@
 # See the README for examples.
 [color]
   ui = true
+  interactive = true
 [color "branch"]
   current = yellow reverse
   local = yellow
@@ -46,6 +47,7 @@
   # diff
   d = diff                          # diff unstaged changes
   dc = diff --cached                # diff staged changes
+  ds = diff --stat
   last = diff HEAD^                 # diff last committed change
 
   # log
@@ -88,10 +90,22 @@
   # tag
   t = tag -n                        # show tags with <n> lines of each tag message
 
+  # `git remote prune origin`: remove remote-tracking branches that were deleted from the remote repo
+  # `git gc`: cleanup unnecessary files and optimize the local repository
+  # `git clean -df`: remove untracked files and directories from the working tree
+  # `git stash clear`: remove all stashed states
+  trim = !git remote prune origin && git gc
+  cleanup = !git clean -df && git stash clear
+
   # svn helpers
   svnr = svn rebase
   svnd = svn dcommit
   svnl = svn log --oneline --show-commit
+
+  # Find out who is currently active on the repository
+  # Displays committers in descending order of number of commits
+  who = shortlog --numbered --summary --email --no-merges --since="3 months"
+
 [format]
   pretty = format:%C(blue)%ad%Creset %C(yellow)%h%C(green)%d%Creset %C(blue)%s %C(magenta) [%an]%Creset
 [mergetool]

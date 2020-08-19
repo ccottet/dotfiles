@@ -201,7 +201,7 @@ install_deps () {
   fi
 }
 
-install_dotfiles () {
+install_basic_dotfiles () {
   info 'installing dotfiles'
 
   local overwrite_all=false backup_all=false skip_all=false
@@ -209,10 +209,28 @@ install_dotfiles () {
   link_file "$DOTFILES_ROOT/home/aliases" "$HOME/.aliases"
   link_file "$DOTFILES_ROOT/home/gitconfig" "$HOME/.gitconfig"
   link_file "$DOTFILES_ROOT/data/gitconfig.local" "$HOME/.gitconfig.local"
-  link_file "$DOTFILES_ROOT/home/p10k.zsh" "$HOME/.p10k.zsh"
   link_file "$DOTFILES_ROOT/home/tmux.conf" "$HOME/.tmux.conf"
   link_file "$DOTFILES_ROOT/home/vimrc" "$HOME/.vimrc"
+  link_file "$DOTFILES_ROOT/home/curlrc" "$HOME/.curlrc"
+  link_file "$DOTFILES_ROOT/home/inputrc" "$HOME/.inputrc"
+}
+
+install_full_dotfiles () {
+  install_basic_dotfiles
+
+  local overwrite_all=false backup_all=false skip_all=false
+
+  link_file "$DOTFILES_ROOT/home/p10k.zsh" "$HOME/.p10k.zsh"
   link_file "$DOTFILES_ROOT/home/zshrc" "$HOME/.zshrc"
+}
+
+install_light_dotfiles () {
+  install_basic_dotfiles
+
+  local overwrite_all=false backup_all=false skip_all=false
+
+  link_file "$DOTFILES_ROOT/home/bash_profile" "$HOME/.bash_profile"
+  link_file "$DOTFILES_ROOT/home/bashrc" "$HOME/.bashrc"
 }
 
 install_go () {
@@ -284,12 +302,35 @@ configure_zsh () {
   sudo usermod -s $(which zsh) $USER
 }
 
-install_deps
-setup_gitconfig
-install_dotfiles
-install_go
-configure_vim
-configure_zsh
+main_full () {
+  info 'Executing full installation with binary dependencies !'
+  install_deps
+  setup_gitconfig
+  install_full_dotfiles
+  install_go
+  configure_vim
+  configure_zsh
+}
+
+main_light () {
+  info 'Executing light installation - customization of bash !'
+  setup_gitconfig
+  install_light_dotfiles
+  configure_vim
+}
+
+user "Do you want a full install (including dependencies or simply a bash customization (light)?\n\
+        [fF]ull, [lL]ight <default> ?"
+
+read -n 1 insttype
+case "$insttype" in
+  f )
+    main_full;;
+  F )
+    main_full;;
+  * )
+    main_light;;
+esac
 
 echo ''
 info '  All installed!'
